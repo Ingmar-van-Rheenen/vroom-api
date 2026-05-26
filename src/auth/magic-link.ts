@@ -5,7 +5,14 @@ import { magicLinks } from '../db/schema.js';
 import { env } from '../env.js';
 import { generateToken, hashToken } from '../lib/tokens.js';
 
-const resend = env.RESEND_API_KEY ? new Resend(env.RESEND_API_KEY) : null;
+function isUsableResendKey(key: string | undefined): key is string {
+  if (!key) return false;
+  if (!key.startsWith('re_')) return false;
+  if (/^re_x+$/i.test(key)) return false;
+  return key.length >= 20;
+}
+
+const resend = isUsableResendKey(env.RESEND_API_KEY) ? new Resend(env.RESEND_API_KEY) : null;
 
 export async function createMagicLink(email: string): Promise<{ token: string; expiresAt: Date }> {
   const token = generateToken(24);
@@ -50,11 +57,7 @@ export async function sendMagicLinkEmail(opts: {
   const url = `${env.API_URL}/auth/callback?token=${encodeURIComponent(opts.token)}`;
 
   if (!resend) {
-    console.log('\n========== MAGIC LINK (dev mode, no RESEND_API_KEY) ==========');
-    console.log(`To:      ${opts.email}`);
-    console.log(`Link:    ${url}`);
-    console.log(`Expires: in ${env.MAGIC_LINK_TTL_MINUTES} minutes`);
-    console.log('==============================================================\n');
+    logLinkToConsole(opts.email, url, 'no RESEND_API_KEY');
     return;
   }
 
@@ -68,8 +71,20 @@ export async function sendMagicLinkEmail(opts: {
 
   if (error) {
     console.error('[resend] Failed to send magic link', error);
+    if (env.NODE_ENV !== 'production') {
+      logLinkToConsole(opts.email, url, `Resend error: ${error.message}`);
+      return;
+    }
     throw new Error('Kon e-mail niet verzenden');
   }
+}
+
+function logLinkToConsole(email: string, url: string, reason: string): void {
+  console.log(`\n========== MAGIC LINK (dev fallback - ${reason}) ==========`);
+  console.log(`To:      ${email}`);
+  console.log(`Link:    ${url}`);
+  console.log(`Expires: in ${env.MAGIC_LINK_TTL_MINUTES} minutes`);
+  console.log('============================================================\n');
 }
 
 function renderEmail(url: string): string {
