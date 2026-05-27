@@ -32,9 +32,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # Direct via de gitleaks-image i.p.v. de action: geen GitHub-API-calls
+      # nodig (die falen op private repos met het default token).
+      - name: Run gitleaks
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest \
+            detect --source=/repo --redact --verbose --no-banner
 
   semgrep:
     name: SAST (semgrep)
@@ -45,12 +48,6 @@ jobs:
       - uses: actions/checkout@v4
       - run: semgrep scan --config p/security-audit --config p/secrets --config p/typescript --error
 
-  dependency-review:
-    name: Dependency review
-    runs-on: ubuntu-latest
-    if: github.event_name == 'pull_request'
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/dependency-review-action@v4
-        with:
-          fail-on-severity: high
+  # dependency-review (actions/dependency-review-action) vereist GitHub Advanced
+  # Security op private repos en kan hier dus niet draaien. `npm audit` hierboven
+  # dekt dezelfde advisory-database. Zet dit terug zodra de repo publiek is.
