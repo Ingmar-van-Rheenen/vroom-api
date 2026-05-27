@@ -86,9 +86,34 @@ export const groepLeden = pgTable(
   }),
 );
 
+export const groepInvites = pgTable(
+  'groep_invites',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    groepId: uuid('groep_id')
+      .notNull()
+      .references(() => groepen.id, { onDelete: 'cascade' }),
+    code: text('code').notNull().unique(),
+    email: text('email'),
+    createdBy: uuid('created_by')
+      .notNull()
+      .references(() => users.id),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    acceptedBy: uuid('accepted_by').references(() => users.id),
+    acceptedAt: timestamp('accepted_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => ({
+    groepIdx: index('groep_invites_groep_id_idx').on(t.groepId),
+    emailIdx: index('groep_invites_email_idx').on(sql`lower(${t.email})`),
+  }),
+);
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
 export type MagicLink = typeof magicLinks.$inferSelect;
 export type Groep = typeof groepen.$inferSelect;
+export type NewGroep = typeof groepen.$inferInsert;
 export type GroepLid = typeof groepLeden.$inferSelect;
+export type GroepInvite = typeof groepInvites.$inferSelect;

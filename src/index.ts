@@ -6,7 +6,9 @@ import { logger } from 'hono/logger';
 import { env } from './env.js';
 import { errorHandler } from './lib/errors.js';
 import { authRoutes } from './routes/auth.js';
+import { groepenRoutes } from './routes/groepen.js';
 import { healthRoutes } from './routes/health.js';
+import { inviteRoutes } from './routes/invites.js';
 import { meRoutes } from './routes/me.js';
 
 const app = new OpenAPIHono();
@@ -27,6 +29,8 @@ app.onError(errorHandler);
 app.route('/', healthRoutes);
 app.route('/', authRoutes);
 app.route('/', meRoutes);
+app.route('/', groepenRoutes);
+app.route('/', inviteRoutes);
 
 app.doc('/openapi.json', {
   openapi: '3.1.0',

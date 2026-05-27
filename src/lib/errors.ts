@@ -5,7 +5,7 @@ import { ZodError } from 'zod';
 export class AppError extends HTTPException {
   readonly code: string;
 
-  constructor(status: 400 | 401 | 403 | 404 | 409 | 422 | 429 | 500, code: string, message: string) {
+  constructor(status: 400 | 401 | 403 | 404 | 409 | 410 | 422 | 429 | 500, code: string, message: string) {
     super(status, { message });
     this.code = code;
   }
@@ -17,6 +17,7 @@ export const errors = {
   notFound: (msg = 'Niet gevonden') => new AppError(404, 'not_found', msg),
   badRequest: (msg = 'Ongeldige aanvraag') => new AppError(400, 'bad_request', msg),
   conflict: (msg = 'Conflict') => new AppError(409, 'conflict', msg),
+  gone: (msg = 'Niet meer geldig') => new AppError(410, 'gone', msg),
   tooManyRequests: (msg = 'Te veel verzoeken') => new AppError(429, 'too_many_requests', msg),
 };
 
