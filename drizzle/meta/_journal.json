@@ -15,6 +15,13 @@
       "when": 1779810306994,
       "tag": "0001_groep_invites",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779871613199,
+      "tag": "0002_autos_ritten_tankbeurten",
+      "breakpoints": true
     }
   ]
 }

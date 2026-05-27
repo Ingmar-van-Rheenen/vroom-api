@@ -1,4 +1,14 @@
-import { pgTable, text, timestamp, uuid, pgEnum, primaryKey, index } from 'drizzle-orm/pg-core';
+import {
+  pgTable,
+  text,
+  timestamp,
+  uuid,
+  pgEnum,
+  primaryKey,
+  index,
+  doublePrecision,
+  jsonb,
+} from 'drizzle-orm/pg-core';
 import { sql } from 'drizzle-orm';
 
 const timestamps = {
@@ -109,6 +119,73 @@ export const groepInvites = pgTable(
   }),
 );
 
+export const autos = pgTable(
+  'autos',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    groepId: uuid('groep_id')
+      .notNull()
+      .references(() => groepen.id, { onDelete: 'cascade' }),
+    naam: text('naam').notNull(),
+    merk: text('merk'),
+    kenteken: text('kenteken'),
+    kmPerLiter: doublePrecision('km_per_liter').notNull(),
+    prijsPerLiter: doublePrecision('prijs_per_liter').notNull(),
+    meta: jsonb('meta'),
+    ...timestamps,
+  },
+  (t) => ({
+    groepIdx: index('autos_groep_id_idx').on(t.groepId),
+  }),
+);
+
+export const ritten = pgTable(
+  'ritten',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    autoId: uuid('auto_id')
+      .notNull()
+      .references(() => autos.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    datum: timestamp('datum', { withTimezone: true }).notNull(),
+    startLat: doublePrecision('start_lat'),
+    startLng: doublePrecision('start_lng'),
+    eindLat: doublePrecision('eind_lat'),
+    eindLng: doublePrecision('eind_lng'),
+    km: doublePrecision('km').notNull(),
+    gpsTrack: jsonb('gps_track'),
+    ...timestamps,
+  },
+  (t) => ({
+    autoIdx: index('ritten_auto_id_idx').on(t.autoId),
+    userIdx: index('ritten_user_id_idx').on(t.userId),
+  }),
+);
+
+export const tankbeurten = pgTable(
+  'tankbeurten',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    autoId: uuid('auto_id')
+      .notNull()
+      .references(() => autos.id, { onDelete: 'cascade' }),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id),
+    datum: timestamp('datum', { withTimezone: true }).notNull(),
+    liters: doublePrecision('liters').notNull(),
+    prijsPerLiter: doublePrecision('prijs_per_liter').notNull(),
+    totaal: doublePrecision('totaal').notNull(),
+    ...timestamps,
+  },
+  (t) => ({
+    autoIdx: index('tankbeurten_auto_id_idx').on(t.autoId),
+    userIdx: index('tankbeurten_user_id_idx').on(t.userId),
+  }),
+);
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 export type Session = typeof sessions.$inferSelect;
@@ -117,3 +194,7 @@ export type Groep = typeof groepen.$inferSelect;
 export type NewGroep = typeof groepen.$inferInsert;
 export type GroepLid = typeof groepLeden.$inferSelect;
 export type GroepInvite = typeof groepInvites.$inferSelect;
+export type Auto = typeof autos.$inferSelect;
+export type NewAuto = typeof autos.$inferInsert;
+export type Rit = typeof ritten.$inferSelect;
+export type Tankbeurt = typeof tankbeurten.$inferSelect;

@@ -6,10 +6,14 @@ import { secureHeaders } from 'hono/secure-headers';
 import { env } from './env.js';
 import { errorHandler } from './lib/errors.js';
 import { authRoutes } from './routes/auth.js';
+import { autosRoutes } from './routes/autos.js';
 import { groepenRoutes } from './routes/groepen.js';
 import { healthRoutes } from './routes/health.js';
 import { inviteRoutes } from './routes/invites.js';
 import { meRoutes } from './routes/me.js';
+import { rittenRoutes } from './routes/ritten.js';
+import { saldoRoutes } from './routes/saldo.js';
+import { tankbeurtenRoutes } from './routes/tankbeurten.js';
 
 export function createApp() {
   const app = new OpenAPIHono();
@@ -35,6 +39,10 @@ export function createApp() {
   app.route('/', meRoutes);
   app.route('/', groepenRoutes);
   app.route('/', inviteRoutes);
+  app.route('/', autosRoutes);
+  app.route('/', rittenRoutes);
+  app.route('/', tankbeurtenRoutes);
+  app.route('/', saldoRoutes);
 
   app.doc('/openapi.json', {
     openapi: '3.1.0',
