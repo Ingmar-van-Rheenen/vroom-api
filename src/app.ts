@@ -13,6 +13,7 @@ import { inviteRoutes } from './routes/invites.js';
 import { meRoutes } from './routes/me.js';
 import { rittenRoutes } from './routes/ritten.js';
 import { saldoRoutes } from './routes/saldo.js';
+import { syncRoutes } from './routes/sync.js';
 import { tankbeurtenRoutes } from './routes/tankbeurten.js';
 
 export function createApp() {
@@ -43,6 +44,7 @@ export function createApp() {
   app.route('/', rittenRoutes);
   app.route('/', tankbeurtenRoutes);
   app.route('/', saldoRoutes);
+  app.route('/', syncRoutes);
 
   app.doc('/openapi.json', {
     openapi: '3.1.0',
