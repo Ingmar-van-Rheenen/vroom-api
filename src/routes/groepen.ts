@@ -71,9 +71,7 @@ groepenRoutes.openapi(
       const groepRow = inserted[0];
       if (!groepRow) throw errors.badRequest('Kon groep niet aanmaken');
 
-      await tx
-        .insert(groepLeden)
-        .values({ groepId: groepRow.id, userId: user.id, rol: 'admin' });
+      await tx.insert(groepLeden).values({ groepId: groepRow.id, userId: user.id, rol: 'admin' });
 
       return groepRow;
     });
@@ -92,7 +90,9 @@ groepenRoutes.openapi(
     responses: {
       200: {
         description: 'OK',
-        content: { 'application/json': { schema: z.array(GroepSchema.extend({ rol: GroepRolSchema })) } },
+        content: {
+          'application/json': { schema: z.array(GroepSchema.extend({ rol: GroepRolSchema })) },
+        },
       },
     },
   }),
@@ -202,7 +202,11 @@ groepenRoutes.openapi(
     responses: {
       200: {
         description: 'Vertrokken',
-        content: { 'application/json': { schema: z.object({ ok: z.literal(true), groepGesloten: z.boolean() }) } },
+        content: {
+          'application/json': {
+            schema: z.object({ ok: z.literal(true), groepGesloten: z.boolean() }),
+          },
+        },
       },
       409: { description: 'Laatste admin' },
     },

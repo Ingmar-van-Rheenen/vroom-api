@@ -5,6 +5,8 @@ import { groepLeden, groepen, type Groep, type GroepLid } from '../db/schema.js'
 import { errors } from '../lib/errors.js';
 import type { AuthVariables } from './middleware.js';
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export type GroepVariables = AuthVariables & {
   groep: Groep;
   lid: GroepLid;
@@ -16,13 +18,15 @@ export function requireGroepMember(
   return async (c, next) => {
     const user = c.get('user');
     const groepId = c.req.param('id');
-    if (!groepId) throw errors.badRequest('groep id ontbreekt');
+    if (!groepId || !UUID_RE.test(groepId)) throw errors.badRequest('Ongeldig groep-id');
 
     const rows = await db
       .select({ groep: groepen, lid: groepLeden })
       .from(groepen)
       .innerJoin(groepLeden, eq(groepLeden.groepId, groepen.id))
-      .where(and(eq(groepen.id, groepId), eq(groepLeden.userId, user.id), isNull(groepen.deletedAt)))
+      .where(
+        and(eq(groepen.id, groepId), eq(groepLeden.userId, user.id), isNull(groepen.deletedAt)),
+      )
       .limit(1);
 
     const row = rows[0];

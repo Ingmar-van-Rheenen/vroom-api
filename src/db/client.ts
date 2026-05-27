@@ -11,3 +11,8 @@ const queryClient = postgres(env.DATABASE_URL, {
 
 export const db = drizzle(queryClient, { schema });
 export type Db = typeof db;
+
+/** Sluit de connection-pool - gebruikt bij graceful shutdown en in tests. */
+export async function closeDb(): Promise<void> {
+  await queryClient.end();
+}

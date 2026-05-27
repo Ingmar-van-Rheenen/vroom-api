@@ -9,7 +9,10 @@ const envSchema = z.object({
 
   SESSION_COOKIE_NAME: z.string().default('vroom_session'),
   SESSION_TTL_DAYS: z.coerce.number().int().positive().default(30),
-  SESSION_COOKIE_DOMAIN: z.string().optional().transform((v) => (v === '' ? undefined : v)),
+  SESSION_COOKIE_DOMAIN: z
+    .string()
+    .optional()
+    .transform((v) => (v === '' ? undefined : v)),
   SESSION_COOKIE_SECURE: z
     .enum(['true', 'false'])
     .default('false')

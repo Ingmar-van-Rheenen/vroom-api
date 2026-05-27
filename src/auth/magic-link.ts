@@ -28,9 +28,7 @@ export async function createMagicLink(email: string): Promise<{ token: string; e
   return { token, expiresAt };
 }
 
-export async function consumeMagicLink(
-  token: string,
-): Promise<{ email: string } | null> {
+export async function consumeMagicLink(token: string): Promise<{ email: string } | null> {
   const tokenHash = hashToken(token);
   const now = new Date();
 
@@ -38,7 +36,11 @@ export async function consumeMagicLink(
     .select()
     .from(magicLinks)
     .where(
-      and(eq(magicLinks.tokenHash, tokenHash), gt(magicLinks.expiresAt, now), isNull(magicLinks.consumedAt)),
+      and(
+        eq(magicLinks.tokenHash, tokenHash),
+        gt(magicLinks.expiresAt, now),
+        isNull(magicLinks.consumedAt),
+      ),
     )
     .limit(1);
 
@@ -50,10 +52,7 @@ export async function consumeMagicLink(
   return { email: link.email };
 }
 
-export async function sendMagicLinkEmail(opts: {
-  email: string;
-  token: string;
-}): Promise<void> {
+export async function sendMagicLinkEmail(opts: { email: string; token: string }): Promise<void> {
   const url = `${env.API_URL}/auth/callback?token=${encodeURIComponent(opts.token)}`;
 
   if (!resend) {

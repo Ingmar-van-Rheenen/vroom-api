@@ -50,10 +50,7 @@ export async function getSessionByToken(token: string): Promise<SessionWithUser 
     return null;
   }
 
-  await db
-    .update(sessions)
-    .set({ lastUsedAt: new Date() })
-    .where(eq(sessions.id, row.session.id));
+  await db.update(sessions).set({ lastUsedAt: new Date() }).where(eq(sessions.id, row.session.id));
 
   return { sessionId: row.session.id, user: row.user };
 }

@@ -5,7 +5,11 @@ import { ZodError } from 'zod';
 export class AppError extends HTTPException {
   readonly code: string;
 
-  constructor(status: 400 | 401 | 403 | 404 | 409 | 410 | 422 | 429 | 500, code: string, message: string) {
+  constructor(
+    status: 400 | 401 | 403 | 404 | 409 | 410 | 422 | 429 | 500,
+    code: string,
+    message: string,
+  ) {
     super(status, { message });
     this.code = code;
   }

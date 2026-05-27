@@ -1,5 +1,5 @@
 import { createRoute, OpenAPIHono, z } from '@hono/zod-openapi';
-import { and, eq, gt, isNull, sql } from 'drizzle-orm';
+import { and, eq, gt, isNull } from 'drizzle-orm';
 import { db } from '../db/client.js';
 import { groepInvites, groepLeden, groepen, users } from '../db/schema.js';
 import { requireUser, type AuthVariables } from '../auth/middleware.js';
@@ -9,7 +9,9 @@ import { generateToken } from '../lib/tokens.js';
 
 const INVITE_TTL_DAYS = 7;
 
-export const inviteRoutes = new OpenAPIHono<{ Variables: AuthVariables & Partial<GroepVariables> }>();
+export const inviteRoutes = new OpenAPIHono<{
+  Variables: AuthVariables & Partial<GroepVariables>;
+}>();
 
 const InvitePreview = z.object({
   code: z.string(),
@@ -49,7 +51,10 @@ inviteRoutes.openapi(
       body: { content: { 'application/json': { schema: CreateInvite } } },
     },
     responses: {
-      201: { description: 'Aangemaakt', content: { 'application/json': { schema: CreatedInvite } } },
+      201: {
+        description: 'Aangemaakt',
+        content: { 'application/json': { schema: CreatedInvite } },
+      },
     },
   }),
   async (c) => {
@@ -115,7 +120,8 @@ inviteRoutes.openapi(
     const row = rows[0];
     if (!row) throw errors.notFound('Onbekende uitnodiging');
     if (row.invite.acceptedAt) throw new AppError(410, 'invite_used', 'Uitnodiging is al gebruikt');
-    if (row.invite.expiresAt < new Date()) throw new AppError(410, 'invite_expired', 'Uitnodiging is verlopen');
+    if (row.invite.expiresAt < new Date())
+      throw new AppError(410, 'invite_expired', 'Uitnodiging is verlopen');
 
     return c.json(
       {
@@ -160,7 +166,13 @@ inviteRoutes.openapi(
       const rows = await tx
         .select()
         .from(groepInvites)
-        .where(and(eq(groepInvites.code, code), gt(groepInvites.expiresAt, new Date()), isNull(groepInvites.acceptedAt)))
+        .where(
+          and(
+            eq(groepInvites.code, code),
+            gt(groepInvites.expiresAt, new Date()),
+            isNull(groepInvites.acceptedAt),
+          ),
+        )
         .limit(1);
 
       const invite = rows[0];
@@ -271,10 +283,13 @@ inviteRoutes.openapi(
     const { code } = c.req.valid('param');
     await db
       .delete(groepInvites)
-      .where(and(eq(groepInvites.groepId, groep.id), eq(groepInvites.code, code), isNull(groepInvites.acceptedAt)));
+      .where(
+        and(
+          eq(groepInvites.groepId, groep.id),
+          eq(groepInvites.code, code),
+          isNull(groepInvites.acceptedAt),
+        ),
+      );
     return c.json({ ok: true as const }, 200);
   },
 );
-
-// keep sql import in case of future raw expressions
-void sql;
