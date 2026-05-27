@@ -1,0 +1,53 @@
+name: Security
+
+on:
+  push:
+    branches: [Develop, main]
+  pull_request:
+    branches: [Develop, main]
+
+concurrency:
+  group: security-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    name: npm audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      # Faalt op high+ kwetsbaarheden. Dev-only moderate issues (esbuild via
+      # drizzle-kit) blokkeren de build niet.
+      - run: npm audit --audit-level=high
+
+  gitleaks:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Direct via de gitleaks-image i.p.v. de action: geen GitHub-API-calls
+      # nodig (die falen op private repos met het default token).
+      - name: Run gitleaks
+        run: |
+          docker run --rm -v "$PWD:/repo" ghcr.io/gitleaks/gitleaks:latest \
+            detect --source=/repo --redact --verbose --no-banner
+
+  semgrep:
+    name: SAST (semgrep)
+    runs-on: ubuntu-latest
+    container:
+      image: semgrep/semgrep
+    steps:
+      - uses: actions/checkout@v4
+      - run: semgrep scan --config p/security-audit --config p/secrets --config p/typescript --error
+
+  # dependency-review (actions/dependency-review-action) vereist GitHub Advanced
+  # Security op private repos en kan hier dus niet draaien. `npm audit` hierboven
+  # dekt dezelfde advisory-database. Zet dit terug zodra de repo publiek is.

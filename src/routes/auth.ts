@@ -12,8 +12,15 @@ import {
 import { consumeMagicLink, createMagicLink, sendMagicLinkEmail } from '../auth/magic-link.js';
 import { env } from '../env.js';
 import { errors } from '../lib/errors.js';
+import { rateLimit } from '../lib/rate-limit.js';
 
 export const authRoutes = new OpenAPIHono();
+
+const magicLinkLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  keyPrefix: 'magic-link',
+});
 
 const MagicLinkRequest = z.object({
   email: z.string().email().max(254),
@@ -30,6 +37,7 @@ authRoutes.openapi(
     path: '/auth/magic-link',
     tags: ['auth'],
     summary: 'Vraag een inlog-link aan',
+    middleware: [magicLinkLimiter] as const,
     request: {
       body: { content: { 'application/json': { schema: MagicLinkRequest } } },
     },
@@ -74,11 +82,7 @@ authRoutes.openapi(
     const consumed = await consumeMagicLink(token);
     if (!consumed) throw errors.badRequest('Link is ongeldig of verlopen');
 
-    const existing = await db
-      .select()
-      .from(users)
-      .where(eq(users.email, consumed.email))
-      .limit(1);
+    const existing = await db.select().from(users).where(eq(users.email, consumed.email)).limit(1);
 
     let userId: string;
     if (existing[0]) {
@@ -95,7 +99,11 @@ authRoutes.openapi(
 
     const userAgent = c.req.header('user-agent') ?? undefined;
     const ipAddress = c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ?? undefined;
-    const { token: sessionToken, expiresAt } = await createSession({ userId, userAgent, ipAddress });
+    const { token: sessionToken, expiresAt } = await createSession({
+      userId,
+      userAgent,
+      ipAddress,
+    });
     setSessionCookie(c, sessionToken, expiresAt);
 
     return c.redirect(env.APP_URL, 302);

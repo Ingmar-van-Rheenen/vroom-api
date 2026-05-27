@@ -48,7 +48,7 @@ Verbinden via DBeaver: host `localhost`, port `5432`, db `vroom`, user `vroom`, 
 
 1. Maak een account op [resend.com](https://resend.com)
 2. Verifieer een sender-domain (bv. `mail.ingmarvanrheenen.nl`) — Resend laat zien welke DNS-records je moet zetten
-3. Maak een API key onder *API Keys*
+3. Maak een API key onder _API Keys_
 4. Tijdens development is `RESEND_API_KEY` optioneel; zonder key wordt de link in de console gelogd
 
 ### 3. Env + install
@@ -79,6 +79,35 @@ Zonder `RESEND_API_KEY` zie je de link in de server-console. Klik erop in de bro
 curl http://localhost:3001/me \
   -H "Cookie: vroom_session=<token-uit-set-cookie-header>"
 ```
+
+## Tests
+
+```bash
+npm test            # alle tests (maakt automatisch de vroom_test database aan)
+npm run test:watch  # watch-mode tijdens ontwikkeling
+```
+
+Tests draaien tegen een **aparte** `vroom_test` database via Hono's `app.request()` — geen draaiende server nodig. Een vangnet weigert te draaien als de DATABASE_URL niet "test" bevat, zodat dev-data nooit wordt gewist. Drie lagen:
+
+- **Unit** (`test/unit/`) — pure functies
+- **Functioneel** (`test/*.test.ts`) — elke endpoint tegen de echte DB
+- **Security** (`test/security.test.ts`) — auth-verplichting, cross-tenant toegang (IDOR), rol-escalatie, invite/magic-link-misbruik, injection, token-hashing, hardening-headers, rate limiting
+
+## Code-kwaliteit
+
+```bash
+npm run typecheck    # tsc --noEmit
+npm run lint         # eslint
+npm run format       # prettier --write
+npm run format:check # prettier --check (zoals CI)
+```
+
+## CI/CD
+
+Twee GitHub Actions workflows draaien op elke push en PR naar `Develop` en `main`:
+
+- **CI** (`.github/workflows/ci.yml`) — typecheck + lint + format-check, en de testsuite tegen een Postgres service-container
+- **Security** (`.github/workflows/security.yml`) — `npm audit` (faalt op high+), gitleaks secret-scan, semgrep SAST, en dependency-review op PR's
 
 ## Deploy naar aaPanel
 
